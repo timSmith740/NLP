@@ -40,22 +40,21 @@ public class processors {
 		    
 		    ArrayList<String> questNouns = new ArrayList<>();
 		    ArrayList<String> questVerbs = new ArrayList<>();
+		    int nounAndVerbCount = 0;
 		    
 		    pipeline.annotate(queryAnnotation);
 		    CoreMap queryCore = queryAnnotation.get(CoreAnnotations.SentencesAnnotation.class).get(0);
 	    	for (CoreLabel token: queryCore.get(TokensAnnotation.class)){
 	    		String pos = token.get(PartOfSpeechAnnotation.class);
 	    		String word = token.get(TextAnnotation.class);
-				if (pos.equals("NNP")){
+	    		System.out.println(pos);
+				if (pos.startsWith("N")){
 					questNouns.add(word.toLowerCase());
-				} else if (pos.equals("NN")){
-					questNouns.add(word.toLowerCase());
-				} else if (pos.equals("VBD")){
-					questVerbs.add(word.toLowerCase());
-				} else if (pos.equals("VB")){
+				}else if (pos.startsWith("V")){
 					questVerbs.add(word.toLowerCase());
 				}
 	    	}
+	    	nounAndVerbCount = questNouns.size() + questVerbs.size();
 		    
 	    	fileLoop: for(String line: IOUtils.linesFromFile(FILE_NAME)) {
 		    	
@@ -76,13 +75,9 @@ public class processors {
 			    		String pos = token.get(PartOfSpeechAnnotation.class);
 			    		String word = token.get(TextAnnotation.class);
 			    		
-		    			if (pos.equals("NNP")){
+		    			if (pos.startsWith("N")){
 		    				ansNouns.add(word.toLowerCase());
-		    			} else if (pos.equals("NN")){
-		    				ansNouns.add(word.toLowerCase());
-		    			} else if (pos.equals("VBD")){
-		    				ansVerbs.add(word.toLowerCase());
-		    			} else if (pos.equals("VB")){
+		    			}else if (pos.startsWith("V")){
 		    				ansVerbs.add(word.toLowerCase());
 		    			}
 			    	}
@@ -109,7 +104,7 @@ public class processors {
 				    }
 				    int totalScore = nouns + verbs;
 				    
-				    float accuracy = totalScore * 1.0f / query.split(" ").length;
+				    float accuracy = totalScore * 1.0f / nounAndVerbCount;
 				    
 			    	if(accuracy > 0.25f) {
 			    		System.out.println("Accuracy for line " + linenum + ", sentence " + sentencenum + ": " + accuracy);
