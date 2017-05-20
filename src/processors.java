@@ -1,11 +1,21 @@
-import edu.stanford.nlp.simple.Document;
-import edu.stanford.nlp.simple.Sentence;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.Properties;
+
+import edu.stanford.nlp.io.IOUtils;
+import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.trees.Tree;
+import edu.stanford.nlp.trees.TreeCoreAnnotations;
+import edu.stanford.nlp.util.CoreMap;
 
 public class processors {
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub.
-		Document doc = new Document("Lincoln was president. He was a boy.");
+	public static void main(String[] args) throws FileNotFoundException {
+		
+		/*Document doc = new Document("Lincoln was president. He was a boy.");
         for (Sentence sent : doc.sentences()) {  // Will iterate over two sentences
             // We're only asking for words -- no need to load any models yet
             System.out.println("The second word of the sentence '" + sent + "' is " + sent.word(1));
@@ -19,7 +29,45 @@ public class processors {
             System.out.println(sent.lemmas());
             System.out.println(sent.governor(1));
             System.out.println(sent.natlogPolarities());
-        }
+        }*/
+		
+		PrintWriter out;
+	    if (args.length > 1) {
+	      out = new PrintWriter(args[1]);
+	    } else {
+	      out = new PrintWriter(System.out);
+	    }
+	    PrintWriter xmlOut = null;
+	    if (args.length > 2) {
+	      xmlOut = new PrintWriter(args[2]);
+	    }
+		
+		Properties props = new Properties();
+	    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref, sentiment");
+
+	    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+
+	    // Initialize an Annotation with some text to be annotated. The text is the argument to the constructor.
+	    Annotation annotation;
+	    if (args.length > 0) {
+	      annotation = new Annotation(IOUtils.slurpFileNoExceptions(args[0]));
+	    } else {
+	      annotation = new Annotation("Abraham Lincoln was president during the Civil War. He didn't get a reply.");
+	    }
+
+	    // run all the selected Annotators on this text
+	    pipeline.annotate(annotation);
+	    
+	    List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
+	    CoreMap sentence = sentences.get(0);
+	    
+	    Tree tree = sentence.get(TreeCoreAnnotations.TreeAnnotation.class);
+	    out.println("The first sentence parse tree is:");
+	    tree.pennPrint(out);
+	    
+	    out.println();
+	    
+	    
 	}
 
 }
