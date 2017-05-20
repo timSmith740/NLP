@@ -5,10 +5,14 @@ import java.util.Properties;
 
 import edu.stanford.nlp.io.IOUtils;
 import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
+import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import edu.stanford.nlp.trees.Tree;
-import edu.stanford.nlp.trees.TreeCoreAnnotations;
+import edu.stanford.nlp.semgraph.SemanticGraph;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation;
 import edu.stanford.nlp.util.CoreMap;
 
 public class processors {
@@ -43,7 +47,7 @@ public class processors {
 	    }
 		
 		Properties props = new Properties();
-	    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref, sentiment");
+	    props.setProperty("annotators", "tokenize, ssplit, pos, parse");
 
 	    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 
@@ -52,20 +56,35 @@ public class processors {
 	    if (args.length > 0) {
 	      annotation = new Annotation(IOUtils.slurpFileNoExceptions(args[0]));
 	    } else {
-	      annotation = new Annotation("Abraham Lincoln was president during the Civil War. He didn't get a reply.");
+	      annotation = new Annotation("Who was president during the Civil War.");
 	    }
 
 	    // run all the selected Annotators on this text
 	    pipeline.annotate(annotation);
 	    
 	    List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
-	    CoreMap sentence = sentences.get(0);
+	    for (CoreMap sentence: sentences){
+	    	for (CoreLabel token: sentence.get(TokensAnnotation.class)){
+	    		String pos = token.get(PartOfSpeechAnnotation.class);
+	    		String word = token.get(TextAnnotation.class);
+	    		System.out.println(token.toString());
+	    		System.out.println(pos);
+	    		System.out.println(word);
+	    	}
+	    	SemanticGraph dependencies = sentence.get(CollapsedCCProcessedDependenciesAnnotation.class);
+    		System.out.println(dependencies.toList());
+	    }
+	    
+	    /*CoreMap sentence = sentences.get(0);
 	    
 	    Tree tree = sentence.get(TreeCoreAnnotations.TreeAnnotation.class);
 	    out.println("The first sentence parse tree is:");
 	    tree.pennPrint(out);
+	    System.out.println(tree.getChildrenAsList());
+	    System.out.println(tree.toString().split("))").length);
 	    
-	    out.println();
+	    out.println();*/
+	    
 	    
 	    
 	}
