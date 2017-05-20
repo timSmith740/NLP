@@ -38,12 +38,8 @@ public class processors {
 		    
 		    Annotation queryAnnotation = new Annotation(query);
 		    
-		    ArrayList<String> questNounsProper = new ArrayList<>();
 		    ArrayList<String> questNouns = new ArrayList<>();
 		    ArrayList<String> questVerbs = new ArrayList<>();
-		    ArrayList<String> ansNounsProper = new ArrayList<>();
-		    ArrayList<String> ansNouns = new ArrayList<>();
-		    ArrayList<String> ansVerbs = new ArrayList<>();
 		    
 		    pipeline.annotate(queryAnnotation);
 		    CoreMap queryCore = queryAnnotation.get(CoreAnnotations.SentencesAnnotation.class).get(0);
@@ -51,7 +47,7 @@ public class processors {
 	    		String pos = token.get(PartOfSpeechAnnotation.class);
 	    		String word = token.get(TextAnnotation.class);
 				if (pos.equals("NNP")){
-					questNounsProper.add(word.toLowerCase());
+					questNouns.add(word.toLowerCase());
 				} else if (pos.equals("NN")){
 					questNouns.add(word.toLowerCase());
 				} else if (pos.equals("VBD")){
@@ -61,7 +57,7 @@ public class processors {
 				}
 	    	}
 		    
-		    for(String line: IOUtils.linesFromFile(FILE_NAME)) {
+	    	fileLoop: for(String line: IOUtils.linesFromFile(FILE_NAME)) {
 		    	
 			    // Initialize an Annotation with some text to be annotated. The text is the argument to the constructor.
 			    Annotation annotation;
@@ -72,12 +68,16 @@ public class processors {
 			    
 			    List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
 			    for (CoreMap sentence: sentences){
+			    	int sentencenum = 0;
+				    ArrayList<String> ansNouns = new ArrayList<>();
+				    ArrayList<String> ansVerbs = new ArrayList<>();
+			    	
 			    	for (CoreLabel token: sentence.get(TokensAnnotation.class)){
 			    		String pos = token.get(PartOfSpeechAnnotation.class);
 			    		String word = token.get(TextAnnotation.class);
 			    		
 		    			if (pos.equals("NNP")){
-		    				ansNounsProper.add(word.toLowerCase());
+		    				ansNouns.add(word.toLowerCase());
 		    			} else if (pos.equals("NN")){
 		    				ansNouns.add(word.toLowerCase());
 		    			} else if (pos.equals("VBD")){
@@ -86,51 +86,45 @@ public class processors {
 		    				ansVerbs.add(word.toLowerCase());
 		    			}
 			    	}
-			    }
-			    int score = 0;
-			    for (String current : questNounsProper){
-			    	if (ansNounsProper.contains(current)){
-			    		score++;
+			    	
+				    int score = 0;
+				    for (String current : questNouns){
+				    	if (ansNouns.contains(current)){
+				    		score++;
+				    	}
+				    }
+				    int nouns = 0;
+				    if (score != 0){
+				    	nouns = score;
+				    }
+				    score = 0;
+				    for (String current : questVerbs){
+				    	if (ansVerbs.contains(current)){
+				    		score++;
+				    	}
+				    }
+				    int verbs = 0;
+				    if (score != 0){
+				    	verbs = score;
+				    }
+				    int totalScore = nouns + verbs;
+				    
+				    float accuracy = totalScore * 1.0f / query.split(" ").length;
+				    
+			    	if(accuracy > 0.25f) {
+			    		System.out.println("Accuracy for line " + linenum + ", sentence " + sentencenum + ": " + accuracy);
 			    	}
+				    
+				    if (accuracy > SCORE_TRUTH_THRESHOLD){
+				    	System.out.println("Found a match");
+				    	break fileLoop;
+				    }
+				    
+				    sentencenum++;
 			    }
-			    int nounsProper = 0;
-			    if (score != 0){
-			    	nounsProper = score;
-			    }
-			    score = 0;
-			    for (String current : questNouns){
-			    	if (ansNouns.contains(current)){
-			    		score++;
-			    	}
-			    }
-			    int nouns = 0;
-			    if (score != 0){
-			    	nouns = score;
-			    }
-			    score = 0;
-			    for (String current : questVerbs){
-			    	if (ansVerbs.contains(current)){
-			    		score++;
-			    	}
-			    }
-			    int verbs = 0;
-			    if (score != 0){
-			    	verbs = score;
-			    }
-			    int totalScore = nounsProper + nouns + verbs;
 			    
-			    float accuracy = totalScore * 1.0f / query.split(" ").length;
-			    
-		    	System.out.println("Accuracy for line " + linenum + ": " + accuracy);
 		    	linenum++;
-			    
-			    if (accuracy > SCORE_TRUTH_THRESHOLD){
-			    	System.out.println("Found a match");
-			    	return;
-			    }
 		    }
-		    	
-		    System.out.println("Statement is not supported by the document.");
 	    }
 	    scanner.close();
 	    
