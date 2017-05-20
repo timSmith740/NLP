@@ -29,7 +29,7 @@ public class processors {
 
 	    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 	    while(true){
-	    	System.out.println("Enter a query");
+	    	System.out.println("Enter a query. (Enter in 'q' to quit)");
 		    String query = scanner.nextLine();
 		    if (query.equals("q")){
 		    	break;
@@ -47,7 +47,6 @@ public class processors {
 	    	for (CoreLabel token: queryCore.get(TokensAnnotation.class)){
 	    		String pos = token.get(PartOfSpeechAnnotation.class);
 	    		String word = token.get(TextAnnotation.class);
-	    		System.out.println(pos);
 				if (pos.startsWith("N")){
 					questNouns.add(word.toLowerCase());
 				}else if (pos.startsWith("V")){
